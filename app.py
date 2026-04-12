@@ -1,51 +1,69 @@
 import streamlit as st
+import pandas as pd
 import numpy as np
 import joblib
-import matplotlib.pyplot as plt
-
-# Load combined pipeline model
-model = joblib.load("model.pkl")
+import plotly.express as px
 
 # Page config
-st.set_page_config(page_title="Polymer Classifier", layout="wide")
+st.set_page_config(page_title="Polymer Classifier", page_icon="🧪")
 
-# Title
 st.title("🧪 Polymer Classification App")
-st.write("Predict the type of polymer based on input features")
+st.caption("Upload fingerprint dataset (CSV) for prediction")
 
-# ---------- SIDEBAR INPUT ----------
-st.sidebar.header("Enter Input Features")
+# Load combined pipeline (NO scaler/encoder separately)
+model = joblib.load("model.pkl")
 
-# 👉 Change these according to YOUR dataset features
-f1 = st.sidebar.number_input("Feature 1", value=0.0)
-f2 = st.sidebar.number_input("Feature 2", value=0.0)
-f3 = st.sidebar.number_input("Feature 3", value=0.0)
-f4 = st.sidebar.number_input("Feature 4", value=0.0)
+st.divider()
 
-# ---------- PREDICTION ----------
-if st.sidebar.button("Predict"):
+# File upload
+uploaded_file = st.file_uploader("Upload CSV file", type=["csv"])
 
-    # Input array
-    input_data = np.array([[f1, f2, f3, f4]])
+if uploaded_file is not None:
 
-    # Prediction
-    prediction = model.predict(input_data)[0]
+    df = pd.read_csv(uploaded_file)
 
-    # ---------- OUTPUT ----------
-    st.subheader("📊 Prediction Result")
+    st.write("📄 Preview of Uploaded Data:")
+    st.dataframe(df.head())
 
-    st.metric("Predicted Polymer Type", prediction)
+    # Drop unwanted columns safely
+    drop_cols = []
+    for col in ["label", "smiles", "Unnamed: 0"]:
+        if col in df.columns:
+            drop_cols.append(col)
 
-    # ---------- OPTIONAL CHART ----------
-    st.subheader("📈 Input Feature Overview")
+    X = df.drop(columns=drop_cols)
 
-    features = ["F1", "F2", "F3", "F4"]
-    values = [f1, f2, f3, f4]
+    # Check feature count (important)
+    if X.shape[1] != 2048:
+        st.error(f"❌ Expected 2048 feature columns. Found {X.shape[1]}.")
+    else:
+        # Prediction using pipeline
+        predictions = model.predict(X)
 
-    fig, ax = plt.subplots()
-    ax.bar(features, values)
-    ax.set_title("Input Features")
-    ax.set_ylabel("Values")
+        # If model supports probabilities
+        try:
+            probabilities = model.predict_proba(X)
+            confidence = np.max(probabilities, axis=1) * 100
+        except:
+            confidence = [None] * len(predictions)
 
-    st.pyplot(fig)
-    
+        # Add results to dataframe
+        df["Predicted_Class"] = predictions
+        df["Confidence (%)"] = confidence
+
+        st.success("✅ Prediction Complete")
+
+        st.write("📊 Results:")
+        st.dataframe(df.head())
+
+        # ---------- CHART ----------
+        st.subheader("📈 Predicted Class Distribution")
+
+        fig = px.histogram(
+            df,
+            x="Predicted_Class",
+            color="Predicted_Class",
+            title="Predicted Class Distribution"
+        )
+
+        st.plotly_chart(fig, use_container_width=True)
