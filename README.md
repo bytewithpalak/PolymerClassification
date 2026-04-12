@@ -111,5 +111,6 @@ CSV file should contain:
 (Optional columns like `smiles`, `label` are ignored)
 
 ---
+<img width="1884" height="989" alt="image" src="https://github.com/user-attachments/assets/e473cd07-763e-4cb8-91c2-1d5871aece6a" />
 
 
