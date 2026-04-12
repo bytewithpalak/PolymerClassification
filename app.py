@@ -56,14 +56,4 @@ if uploaded_file is not None:
         st.write("📊 Results:")
         st.dataframe(df.head())
 
-        # ---------- CHART ----------
-        st.subheader("📈 Predicted Class Distribution")
 
-        fig = px.histogram(
-            df,
-            x="Predicted_Class",
-            color="Predicted_Class",
-            title="Predicted Class Distribution"
-        )
-
-        st.plotly_chart(fig, use_container_width=True)
