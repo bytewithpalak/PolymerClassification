@@ -57,7 +57,7 @@ In this project:
   * SMILES (optional)
   * Fingerprint features (0–2047)
   * Labels (polymer types)
-
+https://www.kaggle.com/datasets/victorsabanzagil/polymers/data
 ⚠️ For prediction, only fingerprint features are required.
 
 ---
